@@ -1,0 +1,6 @@
+installing the firewall in linux
+
+sudo yum install firewalld
+$ sudo systemctl start firewalld
+$ sudo systemctl enable firewalld
+$ sudo systemctl status firewalld

@@ -1,0 +1,140 @@
+#!groovy
+pipeline {
+ 
+    agent {
+        node {
+            label 'ubuntu'
+        }
+    }
+ 
+    environment {
+        // ... setup any environment variables ...
+    }
+ 
+    tools {
+        // ... tell Jenkins what java version, maven version or other tools are required ...
+    }
+ 
+    options {
+        // Configure an overall timeout for the build of one hour.
+        timeout(time: 1, unit: 'HOURS')
+        // When we have test-fails e.g. we don't need to run the remaining steps
+        skipStagesAfterUnstable()
+    }
+ 
+    stages {
+        stage('Initialization') {
+            steps {
+                // ... define any initialization ...
+            }
+        }
+ 
+        stage('Cleanup') {
+            steps {
+                // ... define any cleanup operations ...
+            }
+        }
+ 
+        stage('Checkout') {
+            steps {
+                // ... checkout the current branch ...
+            }
+        }
+ 
+        stage('Build') {
+            when {
+                expression {
+                    env.BRANCH_NAME != 'develop'
+                }
+            }
+            steps {
+                // ... perform the build of any non-develop branch ...
+            }
+            post {
+                always {
+                    junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: true)
+                    junit(testResults: '**/failsafe-reports/*.xml', allowEmptyResults: true)
+                }
+            }
+        }
+ 
+        stage('Build develop') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                // ... perform the build of the develop branch ...
+            }
+            post {
+                always {
+                    junit(testResults: '**/surefire-reports/*.xml', allowEmptyResults: true)
+                    junit(testResults: '**/failsafe-reports/*.xml', allowEmptyResults: true)
+                }
+            }
+        }
+ 
+        stage('Code Quality') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                // ... perform code quality checks ...
+           }
+        }
+ 
+        stage('Deploy') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                // ... deploy snapshots ...
+            }
+        }
+ 
+        stage('Build site') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                // ... generate the projects website ...
+            }
+        }
+ 
+        stage('Stage site') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                // ... stage the projects website ...
+            }
+        }
+ 
+        stage('Deploy site') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                // ... deploy the projects website ...
+            }
+        }
+    }
+ 
+    // Do any post build stuff ... such as sending emails depending on the overall build result.
+    post {
+        // If this build failed, send an email to the list.
+        failure {
+        }
+ 
+        // If this build didn't fail, but there were failing tests, send an email to the list.
+        unstable {
+        }
+ 
+        // Send an email, if the last build was not successful and this one is.
+        success {
+        }
+ 
+        always {
+        }
+    }
+ 
+}

@@ -1,0 +1,25 @@
+pipeline script
+
+node{
+   stage('SCM Checkout'){
+       git credentialsId: 'git-cred', url: 'https://github.com/vybhavkadam/my-app.git'
+   }
+   stage('Mvn Package'){
+       sh 'mvn clean package'
+   }
+   stage('Build Docker Image'){
+     sh 'docker build -t vybhavkadam/my-app:2.0.0 .'
+   }
+   stage('Push Docker Image'){
+     withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
+        sh "docker login -u vybhavkadam -p ${dockerHubPwd}"
+     }
+     sh 'docker push vybhavkadam/my-app:2.0.0'
+   }
+    stage('Run Container on prod Server'){
+     def dockerRun = 'docker run -p 8080:8080 -d --name my-app vybhavkadam/my-app:2.0.0'
+     sshagent(['prod-server']){
+       sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.33.253 ${dockerRun}"
+     }
+   }
+}
